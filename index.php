@@ -36,6 +36,17 @@ task3();
 
 echo '</div>';
 
+/**
+ * Task 4
+ */
+
+echo "<div class='task-wrapper'>";
+echo '<h2>Задание 4</h2>';
+
+task4();
+
+echo '</div>';
+
 $content = ob_get_contents();
 ob_end_clean();
 ?>

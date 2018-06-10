@@ -1,22 +1,14 @@
 <?php
 
-// ucwords($str); // преобразует в верхний регистр первую букву строки
-// strtoupper($str); // преобразует английские слова в строке в верхний регистр
-
 //задание 1
 function task1()
 {
-    $file = file_get_contents('data.xml');
-    $xml = new SimpleXMLElement($file); //root
-
+    $file = 'data.xml';
+    $xml = new SimpleXMLElement(file_get_contents($file));
+    // Собираем данные
     $orderNumber = $xml->attributes()->PurchaseOrderNumber->__toString();
     $orderDate = $xml->attributes()->OrderDate->__toString();
-
-    echo '<div class="order">';
-
-    echo '<h3 class="order__title">Order № ', $orderNumber, '</h3>';
-    echo '<div class="order__date"><span>order date: ', $orderDate, '</span></div>';
-
+    $deliveryNotes = $xml->DeliveryNotes->__toString();
     foreach ($xml->Address as $address) {
         $addressType = $address['Type'];
         switch ($addressType) {
@@ -40,36 +32,50 @@ function task1()
                 break;
         }
     }
-
-    echo '<h5 class="order__shipping-info">Shipping to <strong>', $shippingName ,'</strong> address: ',
-    $shippingStreet, ', ', $shippingCity, ', ', $shippingState, ', ', $shippingZip, ', ',
-    $shippingCountry, '</h5>';
-
-    echo '<div class="order__notes"> Delivery Notes: ', $xml->DeliveryNotes->__toString(), '</div>';
-
-    echo '<table>';
-
-    echo '<tr><th>Part Number</th><th>Product Name</th><th>Quantity</th>',
-    '<th>US Price</th><th>Ship Date</th><th>Comment</th></tr>';
-
+    $count = 0;
     foreach ($xml->Items->Item as $item) {
-        $partNumber = $item['PartNumber'];
-        $productName = $item->ProductName->__toString();
-        $quantity = $item->Quantity->__toString();
-        $price = $item->USPrice->__toString();
-        $shipDate = $item->ShipDate->__toString()?$item->ShipDate->__toString():'--';
-        $comment = $item->Comment->__toString()?$item->Comment->__toString():'--';
-        echo '<tr><td>', $partNumber, '</td><td>', $productName, '</td><td>', $quantity, '</td><td>',
-        $price, '</td><td>', $shipDate, '</td><td>', $comment, '</td></tr>';
+        $partNumber[$count] = $item['PartNumber'];
+        $productName[$count] = $item->ProductName->__toString();
+        $quantity[$count] = $item->Quantity->__toString();
+        $price[$count] = $item->USPrice->__toString();
+        $shipDate[$count] = $item->ShipDate->__toString() ? $item->ShipDate->__toString() : '--';
+        $comment[$count++] = $item->Comment->__toString() ? $item->Comment->__toString() : '--';
     }
-    
-    echo '</table>';
-    
-    echo '<h6 class="order__billing-info">Billing info: ', $billingName ,', ',
-    $billingStreet, ', ', $billingCity, ', ', $billingState, ', ', $billingZip, ', ',
-    $billingCountry, '</h6>';
-
-    echo '</div>';
+    // Готовим к выводу
+    $shippingAddress = $shippingStreet . ', ' . $shippingCity . ', ' . $shippingState . ', ' . $shippingZip . ', ' . $shippingCountry;
+    $billingAddress = $billingStreet . ', ' . $billingCity . ', ' . $billingState . ', ' . $billingZip . ', ' . $billingCountry;
+    $tableRows = '';
+    for ($i = 0; $i < $count; $i++) {
+        $tableRows .=  '<tr>
+                            <td>' . $partNumber[$i] . '</td>
+                            <td>' . $productName[$i] . '</td>
+                            <td>' . $quantity[$i] . '</td>
+                            <td>' . $price[$i] . '</td>
+                            <td>' . $shipDate[$i] . '</td>
+                            <td>' . $comment[$i] . '</td>
+                        </tr>';
+    }
+    $order = '<div class="order">
+                <h3 class="order__title">Order № ' . $orderNumber . '</h3>
+                <div class="order__date"><span>order date: ' . $orderDate . '</span></div>
+                <h5 class="order__shipping-info">Shipping to <strong>' . $shippingName . '</strong>
+                 , address: ' . $shippingAddress . '</h5>
+                <div class="order__notes"> Delivery Notes:  ' . $deliveryNotes . '</div>
+                <table>
+                    <tr>
+                        <th>Part Number</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>US Price</th>
+                        <th>Ship Date</th>
+                        <th>Comment</th>
+                     </tr>
+                     ' .$tableRows. '
+                </table>
+                <h6 class="order__billing-info">Billing info: ' . $billingName . ', address: ' . $billingAddress . '</h6>  
+             </div>';
+    // Выводим данные
+    echo $order;
 }
 
 //задание 2
@@ -89,27 +95,23 @@ function task2()
             ]
         ]
     ];
+    $file1 = './output.json';
+    $file2 = './output2.json';
 
-    $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
-    file_put_contents('./output.json', $encoded);
+    file_put_contents($file1, json_encode($data, JSON_UNESCAPED_UNICODE));
 
     echo '<p>Файл "output.json" успешно записан</p>';
 
-    $data =  file_get_contents('./output.json');
-    $decoded = json_decode($data, true);
+    $decoded = json_decode(file_get_contents($file1), true);
+
     $decoded2 = array_slice($decoded, 0);
+    $decoded2['company'] = (rand(0, 1)) ? mb_strtoupper($decoded2['company']) : $decoded2['company'];
 
-    if(rand(0,1)) {
-        $decoded2['company'] = mb_strtoupper($decoded2['company']);
-    }
-
-    $encoded2 = json_encode($decoded2, JSON_UNESCAPED_UNICODE);
-    file_put_contents('./output2.json', $encoded2);
+    file_put_contents($file2, json_encode($decoded2, JSON_UNESCAPED_UNICODE));
 
     echo '<p>Файл "output2.json" успешно записан</p>';
 
-    $data2 = file_get_contents('./output2.json');
-    $decoded2 = json_decode($data2, true);
+    $decoded2 = json_decode(file_get_contents($file2), true);
 
     $diffs = array_diff_assoc($decoded, $decoded2);
 
@@ -121,7 +123,6 @@ function task2()
 function task3()
 {
     $csvfile = './numbers.csv';
-    $arr = array();
 
     for ($i = 0; $i < 5; $i++) {
         for ($j = 0; $j < 10; $j++) {
@@ -130,6 +131,10 @@ function task3()
     }
 
     $fp = fopen($csvfile, 'w');
+    if(!$fp) {
+        return;
+    }
+
     foreach ($arr as $field) {
         fputcsv($fp, $field, ';');
     }
@@ -138,16 +143,26 @@ function task3()
     echo '<p>Файл "numbers.csv" успешно записан</p>';
 
     $fp = fopen($csvfile, 'r');
-    if ($fp) {
-        $sumEven = 0;
-        while(($csvData = fgetcsv($fp, 200, ';')) !== false) {
-            for ($i = 0; $i < count($csvData); $i++) {
-                if($csvData[$i] % 2 === 0) {
-                    $sumEven += $csvData[$i];
-                }
-            }
+    if (!$fp) {
+        return;
+    }
+    $sumEven = 0;
+    while(($csvData = fgetcsv($fp, 100, ';')) !== false) {
+        for ($i = 0; $i < count($csvData); $i++) {
+            $sumEven += ($csvData[$i] % 2 === 0) ? $csvData[$i] : 0;
         }
     }
     fclose($fp);
     echo '<p>Сумма четных чисел в файле = ', $sumEven, '</p>';
+}
+
+//задание 4
+function task4()
+{
+    $url = 'https://en.wikipedia.org/w/api.php?action=query&titles=Main%20Page&prop=revision
+s&rvprop=content&format=json';
+    $decoded = json_decode(file_get_contents($url), true);
+    $pageId = $decoded['query']['pages']['15580374']['pageid'];
+    $pageTitle = $decoded['query']['pages']['15580374']['title'];
+    echo '<p>Данные с: ', $url, '<br>title: ', $pageTitle, '; page_id: ', $pageId, ';</p>';
 }
