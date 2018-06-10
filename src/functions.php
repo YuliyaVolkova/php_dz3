@@ -164,5 +164,6 @@ s&rvprop=content&format=json';
     $decoded = json_decode(file_get_contents($url), true);
     $pageId = $decoded['query']['pages']['15580374']['pageid'];
     $pageTitle = $decoded['query']['pages']['15580374']['title'];
-    echo '<p>Данные с: ', $url, '<br>title: ', $pageTitle, '; page_id: ', $pageId, ';</p>';
+    $result = '<p>Данные с: ' . $url . '<br>title: ' . $pageTitle . '; page_id: ' . $pageId . ';</p>';
+    echo $result;
 }
