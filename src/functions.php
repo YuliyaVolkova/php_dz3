@@ -119,41 +119,52 @@ function task2()
     print_r($diffs);
 }
 
+// Вспомогательные функции
+
+function sumOnlyEven(int $a, int $b) :int
+{
+    return (($a % 2 === 0) ? $a : 0) + (($b % 2 === 0) ? $b : 0);
+}
+
+function array2x2RandNumbers(int $rows, int $cols, int $min, int $max) :array
+{
+    for ($i = 0; $i < $rows; $i++) {
+        for ($j = 0; $j < $cols; $j++) {
+            $arr[$i][$j] = mt_rand($min, $max);
+        }
+    }
+    return $arr;
+}
+
 //задание 3
 function task3()
 {
-    $csvfile = './numbers.csv';
-
-    for ($i = 0; $i < 5; $i++) {
-        for ($j = 0; $j < 10; $j++) {
-            $arr[$i][$j] = mt_rand(1, 100);
+    // Запись в csv файл двумерного массива случайных чисел от 1 до 100
+    $csvFile = './numbers.csv';
+    $arr = array2x2RandNumbers(5, 10, 1, 100);
+    try {
+        $csv  = new SplFileObject($csvFile, 'w');
+        foreach ($arr as $field) {
+            $csv->fputcsv($field, ';');
         }
+        echo '<p>Файл "numbers.csv" успешно записан</p>';
+        $csv = null;
+    } catch (RuntimeException $e ) {
+        $errLogFile = './src/logs/PDOErrors.txt';
+        file_put_contents($errLogFile, $e->getMessage(), FILE_APPEND);
     }
-
-    $fp = fopen($csvfile, 'w');
-    if(!$fp) {
-        return;
-    }
-
-    foreach ($arr as $field) {
-        fputcsv($fp, $field, ';');
-    }
-    fclose($fp);
-
-    echo '<p>Файл "numbers.csv" успешно записан</p>';
-
-    $fp = fopen($csvfile, 'r');
-    if (!$fp) {
-        return;
-    }
-    $sumEven = 0;
-    while(($csvData = fgetcsv($fp, 100, ';')) !== false) {
-        for ($i = 0; $i < count($csvData); $i++) {
-            $sumEven += ($csvData[$i] % 2 === 0) ? $csvData[$i] : 0;
+    // Чтение из csv файла данных и вывод суммы четных чисел
+    try {
+        $csv  = new SplFileObject($csvFile, 'r');
+        $sumEven = 0;
+        while(!$csv->eof() && ($row = $csv->fgetcsv()) && $row[0] !== null) {
+            $sumEven = array_reduce(explode(';', $row[0]), 'sumOnlyEven', $sumEven);
         }
+        $csv = null;
+        echo '<p>Сумма четных чисел в файле = ' . $sumEven . '</p>';
+    } catch (RuntimeException $e ) {
+        file_put_contents($errLogFile, $e->getMessage(), FILE_APPEND);
     }
-    fclose($fp);
-    echo '<p>Сумма четных чисел в файле = ', $sumEven, '</p>';
 }
 
 //задание 4
